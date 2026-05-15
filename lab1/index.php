@@ -13,7 +13,13 @@
     </header>
     <main>
         <p>
-            <?="Hello world"?>
+            <?php 
+            $texts = [
+                "Hello, world!",
+                "Привет, мир!"
+            ];
+            echo($texts[array_rand($texts)]);
+            ?>
         </p>
     </main>
     <footer class="bg-dark text-white text-center p-3 ft">

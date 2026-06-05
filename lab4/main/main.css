@@ -1,0 +1,18 @@
+.ft{
+position: absolute;
+bottom: 0px;
+width: 100%;
+}
+.flex-container{
+    display: flex;
+    flex-direction: row;
+}
+.centre{
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+}
+.center{
+    width:80%;
+    margin:auto;
+}

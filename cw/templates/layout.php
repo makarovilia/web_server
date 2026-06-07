@@ -1,3 +1,4 @@
+<?php $user = currentUser(); ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -65,16 +66,34 @@
                             Главная
                         </a>
                     </li>
+                    <?php if (!$user): ?>
 
+                        <li class="list-group-item bg-transparent"><a class="text-decoration-none text-light" href="<?= url('login') ?>">Вход</a></li>
+                        <li class="list-group-item bg-transparent"><a class="text-decoration-none text-light" href="<?= url('register') ?>">Регистрация</a></li>
+
+                    <?php else: ?>
+
+                        <li class="list-group-item bg-transparent"><a class="text-decoration-none text-light" href="<?= url('card/create') ?>">Создать карточку</a></li>
+
+                        <li class="list-group-item bg-transparent">
+                            <a class="text-decoration-none text-light" href="<?= url('logout') ?>">
+                                Выйти (<?= htmlspecialchars($user['login']) ?>)
+                            </a>
+                        </li>
+
+                        <?php if ($user['role'] === 'moderator'): ?>
+
+                            <li class="list-group-item bg-transparent">
+                                <a class="text-decoration-none text-light" href="<?= url('card/pending') ?>">
+                                    Модерация
+                                </a>
+                            </li>
+                        <?php endif; ?>
+
+                     <?php endif; ?>
                     <li class="list-group-item bg-transparent">
                         <a class="text-decoration-none text-light" href="<?= url('about') ?>">
                             Обо мне
-                        </a>
-                    </li>
-
-                    <li class="list-group-item bg-transparent">
-                        <a class="text-decoration-none text-light" href="<?= url('card/create') ?>">
-                            Создать карточку
                         </a>
                     </li>
 

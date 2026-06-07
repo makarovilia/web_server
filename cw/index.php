@@ -2,7 +2,9 @@
 require __DIR__ . '/controller.php';
 require __DIR__ . '/helper.php';
 require __DIR__ . '/articleController.php';
+require_once __DIR__ . '/auth.php';
 
+session_start();
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -95,5 +97,33 @@ if (
         (int)$matches[1]
     );
 
+    exit;
+}
+
+if ($url === '/register') {
+    $controller->register();
+    exit;
+}
+if ($url === '/login') {
+    $controller->login();
+    exit;
+}
+if ($url === '/logout') {
+    session_destroy();
+    header('Location: ' . url(''));
+    exit;
+}
+
+if ($url === '/card/pending') {
+    $articleController->pending();
+    exit;
+}
+
+if (preg_match('#^/card/(\d+)/publish$#', $url, $m)) {
+    $articleController->publish((int)$m[1]);
+    exit;
+}
+if (preg_match('#^/card/(\d+)/delete$#', $url, $m)) {
+    $articleController->delete((int)$m[1]);
     exit;
 }

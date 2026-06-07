@@ -1,17 +1,4 @@
 <?php
-if (!empty($card['image']))
-{
-    $content .= '
-
-    <img
-        src="/' .
-        htmlspecialchars(
-            $card['image']
-        ) .
-        '"
-        class="img-fluid mb-3"
-    >';
-}
 $content = '
 
 <div class="card shadow-sm">
@@ -33,7 +20,33 @@ $content = '
     </div>
 
 </div>
+';
 
+if (!empty($card['image']))
+{
+    $content .= '
+
+    <img
+        src="/' .
+        htmlspecialchars(
+            $card['image']
+        ) .
+        '"
+        class="img-fluid mb-3"
+    >';
+}
+
+$user = currentUser();
+
+if ($user && $user['role'] === 'moderator') {
+    $content .= '
+    <a class="btn btn-danger"
+       href="' . url('card/' . $card['id'] . '/delete') . '">
+        Удалить
+    </a>';
+}
+
+$content .= '
 <h3 class="mt-4">
     Комментарии
 </h3>
@@ -42,6 +55,7 @@ $content = '
 
 foreach($comments as $comment)
 {
+
     $content .= '
 
     <div class="card mt-2">
@@ -49,7 +63,7 @@ foreach($comments as $comment)
         <div class="card-body">
 
             <strong>'
-            . htmlspecialchars($comment['author']) .
+            . htmlspecialchars($comment['login']) .
             '</strong>
 
             <p class="mb-0">'
@@ -65,13 +79,6 @@ $content .= '
 
 <form method="POST" class="mt-4">
 
-    <input
-        type="text"
-        name="author"
-        class="form-control mb-2"
-        placeholder="Ваше имя"
-    >
-
     <textarea
         name="text"
         class="form-control mb-2"
@@ -83,3 +90,4 @@ $content .= '
     </button>
 
 </form>';
+require __DIR__ . '/layout.php';

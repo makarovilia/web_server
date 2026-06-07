@@ -8,24 +8,8 @@ class ArticleController
 public function show(int $id): void
 {
     global $pdo;
-    if($_SERVER['REQUEST_METHOD'] === 'POST')
-        {
-            $stmt = $pdo->prepare(
-            'INSERT INTO comments(card_id, author, text)
-             VALUES(?, ?, ?)'
-    );
 
-        $stmt->execute([
-            $id,
-            $_POST['author'],
-            $_POST['text']
-        ]);
-
-        header(
-            'Location: ' .
-            url('card/' . $id)
-        );
-        exit;}
+    
 
     $stmt = $pdo->prepare(
         'SELECT * FROM cards WHERE id = ?'
@@ -40,14 +24,41 @@ public function show(int $id): void
         echo 'Карточка не найдена';
         return;
     }
+    $user = currentUser();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!$user) {
+            echo "Только авторизованные пользователи могут оставлять комментарии";
+            exit;
+        }
 
-    $stmt = $pdo->prepare(
-        'SELECT * FROM comments WHERE card_id = ?'
-    );
+        $stmt = $pdo->prepare("
+            INSERT INTO comments(user_id, card_id, text)
+            VALUES (?, ?, ?)
+        ");
+
+        $stmt->execute([
+            $user['id'],
+            $id,
+            $_POST['text']
+        ]);
+        header('Location: ' . url('card/' . $id));
+        exit;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT
+            comments.*,
+            users.login
+        FROM comments
+        JOIN users
+            ON users.id = comments.user_id
+        WHERE comments.card_id = ?
+    ");
 
     $stmt->execute([$id]);
 
     $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 
     View::render(
         'card',
@@ -57,11 +68,20 @@ public function show(int $id): void
             'comments' => $comments
         ]
     );
+       
 }
 
 public function create(): void
 {
     global $pdo;
+
+    $user = currentUser();
+
+    if (!$user) {
+        echo "Только авторизованные пользователи могут создавать карточки";
+        exit;
+    };
+
     if (
         !empty($_FILES['image']['name']) &&
         $_FILES['image']['error'] !== UPLOAD_ERR_OK
@@ -79,7 +99,6 @@ public function create(): void
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST')
     {
-        $uploadDir = 'uploads/';
 
         $imagePath = null;
 
@@ -95,7 +114,7 @@ public function create(): void
                 );
 
             $imagePath =
-                $uploadDir .
+                __DIR__ . '/uploads/' .
                 $fileName;
 
             move_uploaded_file(
@@ -104,16 +123,22 @@ public function create(): void
             );
         }
 
+        $status = "pending";
+        $imagePath = $imagePath
+            ? 'cw/uploads/' . $fileName
+            : null;
+
         $stmt = $pdo->prepare(
             'INSERT INTO cards
-             (title, text, image)
-             VALUES (?, ?, ?)'
+             (title, text, image, status)
+             VALUES (?, ?, ?, ?)'
         );
 
         $stmt->execute([
             $_POST['title'],
             $_POST['text'],
             $imagePath,
+            $status
         ]);
 
         header(
@@ -182,4 +207,56 @@ public function create(): void
     ]);
 }
 
+
+public function pending(): void
+{
+    global $pdo;
+
+    requireRole(['moderator']);
+
+    $stmt = $pdo->query("
+        SELECT * FROM cards
+        WHERE status = 'pending'
+        ORDER BY id DESC
+    ");
+
+    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    View::render('pendingCards', [
+        'cards' => $cards,
+        'title' => 'Модерация'
+    ]);
+}
+public function publish(int $id): void
+{
+    global $pdo;
+
+    requireRole(['moderator']);
+
+    $stmt = $pdo->prepare("
+        UPDATE cards
+        SET status = 'published'
+        WHERE id = ?
+    ");
+
+    $stmt->execute([$id]);
+
+    header('Location: ' . url('card/pending'));
+    exit;
+}
+public function delete(int $id): void
+{
+    global $pdo;
+
+    requireRole(['moderator']);
+
+    $stmt = $pdo->prepare("
+        DELETE FROM cards WHERE id = ?
+    ");
+
+    $stmt->execute([$id]);
+
+    header('Location: ' . url(''));
+    exit;
+}
 }
